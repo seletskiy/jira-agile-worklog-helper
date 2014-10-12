@@ -1,0 +1,14 @@
+{
+    "manifest_version": 2,
+    "content_scripts": [{
+        "exclude_globs": [],
+        "include_globs": ["*"],
+        "js": ["jira-agile-worklog-helper.user.js"],
+        "matches": ["http://jira.rn/*", "https://jira/*"],
+        "run_at": "document_end"
+    }],
+    "converted_from_user_script": true,
+    "description": "Tracks time spent on issues under Agile/Kanaban process",
+    "name": "Jira Agile Worklog Helper",
+    "version": "1"
+}
