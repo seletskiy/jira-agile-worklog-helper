@@ -14,6 +14,7 @@ Install greasemonkey first:
 https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/
 
 Then, follow link: https://github.com/seletskiy/jira-agile-worklog-helper/raw/master/jira-agile-worklog-helper.user.js
+
 Browser will ask you about installation, you've to hit 'Install' button.
 
 Chrome
