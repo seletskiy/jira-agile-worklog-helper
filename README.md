@@ -13,9 +13,7 @@ Install greasemonkey first:
 
 https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/
 
-Then, follow link:
-
-    link here
+Then, follow link: https://github.com/seletskiy/jira-agile-worklog-helper/blob/master/jira-agile-worklog-helper.user.js
 
 Browser will ask you about installation, you've to hit 'Install' button.
 
@@ -36,7 +34,7 @@ the directory.
 Opera
 -----
 
-Newer version based on chrome so installation process is same.
+Newer versions are based on chrome so installation process is same.
 
 Old versions of opera was not tested, however, everything should run fine
 (please confirm!)
@@ -46,9 +44,11 @@ Usage
 
 Jira Agile Worklog Helper is working, if you can see this UI elements:
 
-1
-2
-3
+* Small icon near search that represents amount of issues currently under your work:
+ ![In work badge](https://cloud.githubusercontent.com/assets/674812/4607267/4a744602-5248-11e4-8955-14483c8eba46.png)
+* Start / Stop work button in standard view mode:
+![In standard mode](https://cloud.githubusercontent.com/assets/674812/4607268/4facbe74-5248-11e4-94af-fab550c92152.png)
+* Small start / stop work button in agile mode: ![In agile](https://cloud.githubusercontent.com/assets/674812/4607270/58c16096-5248-11e4-91a4-f829ebf9cdc6.png)
 
 Every time you start work on the issue, just press 'Start work' button and
 Helper will track time for you. When you've done, hit 'Stop work' and specify
@@ -69,6 +69,15 @@ will also work in Agile/Kanban mode.
 
 * You can create filter to show what issues are currently in progress by you
 using JQL `labels in (jwh:<your-username-here>:in-work)`.
+
+How it's work
+=============
+
+Jira Agile Worklog Helper utilizes issue labels for time tracking.
+
+Two labels are used:
+* `jwh:<your-username-here>:in-work` to track down which issues currently in progress;
+* `jwh:<your-username-here>:<timestamp>` to track amount of time spent;
 
 Disclamer
 =========
