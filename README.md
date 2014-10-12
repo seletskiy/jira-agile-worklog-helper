@@ -39,6 +39,17 @@ Newer versions are based on chrome so installation process is same.
 Old versions of opera was not tested, however, everything should run fine
 (please confirm!)
 
+Features
+========
+
+* full Jira UI integration;
+* cross-browser support;
+* work both for standard and agile/kanban processes;
+* time tracking without cookies, making possible to start and stop issue
+from different locations;
+* issues in progress can be shown via clicking corresponding button or via
+JQL filter.
+
 Usage
 =====
 

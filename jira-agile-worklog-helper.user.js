@@ -146,15 +146,15 @@ var script = function () {
 	//
 	var messages = {
 		'ru': {
-			'Time Spent': 'Затрачено времени',
+			'Time spent': 'Затрачено времени',
 			'Log': 'Записать',
 			'Stop without tracking': 'Остановить без записи',
 			'Cancel': 'Отмена',
-            'Stop Work': 'Остановить работу',
+            'Stop work': 'Остановить работу',
             'Starting time tracker...': 'Счётчик времени...',
-            'Start Work': 'Начать работу',
+            'Start work': 'Начать работу',
             'What amount of work was done?': 'Что было сделано?',
-			'Start / Stop Work': 'Начать / Закончить работу',
+			'Start / Stop work': 'Начать / Закончить работу',
 		},
 		'en': {}
 	};
@@ -171,12 +171,12 @@ var script = function () {
                 return lib.$('<button/>')
                     .addClass('aui-button')
                     .addClass('worklog-helper-stop-button')
-                    .text(lib._('Stop Work'))
+                    .text(lib._('Stop work'))
             })(),
 			startWorkButton: lib.$('<button/>')
                     .addClass('aui-button')
                     .addClass('worklog-helper-start-button')
-                    .text(lib._('Start Work')),
+                    .text(lib._('Start work')),
             startWorkButtonAgile: lib.$('<button/>')
                     .addClass('aui-button')
                     .addClass('aui-button-compact')
@@ -296,7 +296,7 @@ var script = function () {
                     '<form class="aui">' +
                     '<div class="field-group">' +
                         '<label for="worklog-helper-spent-time-final">' +
-                            lib._("Time Spent") +
+                            lib._("Time spent") +
                         '</label>' +
                         '<input class="text short-field" ' +
                             'id="worklog-helper-spent-time-final"' +
@@ -304,7 +304,7 @@ var script = function () {
                     '</div>' +
                     '<div class="field-group">' +
                         '<label for="worklog-description">' +
-                            lib._("Work Description") +
+                            lib._("Work description") +
                         '</label>' +
                         '<textarea name="spent-time-comment"' +
                             'id="worklog-description"' +
