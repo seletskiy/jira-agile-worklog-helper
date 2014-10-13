@@ -199,55 +199,6 @@ var script = function () {
 				var input = lib.$('<input/>');
 				input.attr('id', 'worklog-helper-spent-time');
 				input.css('height', '26px');
-				var updateTime = function () {
-					var oldTime = lib.dateDiff(lib.now(), issue.started);
-					input.val(lib.parseSpent(input.val()));
-
-					var newTimeDiff = lib.spentToDate(input.val());
-					var newTime = new Date();
-					newTime.setTime(
-						issue.started.getTime() -
-							(newTimeDiff.getTime() - oldTime.getTime()));
-					input.attr('disabled', true);
-					updateTimeTrackingLabel(issue.key, issue.started, newTime,
-						function () {
-							input.removeAttr('disabled');
-						}
-					);
-					issue.started = newTime;
-					ui.spentTimeFinalIndicator.val(input.val());
-				};
-				input.change(updateTime);
-				input.keyup(function (e) {
-					e.stopPropagation();
-					if (e.keyCode == hotkeys.enter) {
-						updateTime();
-						input[0].blur();
-					} else if (e.keyCode == hotkeys.esc) {
-						input.removeClass('focused');
-						input[0].blur();
-					}
-				});
-				input.focus(function () {
-					input.addClass('focused');
-					input.addClass('changed');
-				});
-				input.blur(function () {
-					input.removeClass('focused');
-				});
-				input.mouseover(function () {
-					input.addClass('focused');
-				});
-				input.mouseout(function () {
-					if (document.activeElement != input[0]) {
-						input.removeClass('focused');
-					}
-				})
-				input.updateHeight = function () {
-					// @TODO: fix hardcode.
-					var height = ui.stopWorkButton.outerHeight() - 2;
-					input.css('height', height + 'px');
-				}
 				return input;
 			}()),
 			spinner: (function () {
@@ -537,16 +488,77 @@ var script = function () {
 	}
 
 	var bindStopWork = function () {
-		ui.buttonWrap.append(ui.stopWorkButton);
-		ui.opsbar.append(ui.buttonWrap);
 		ui.stopWorkButton.click(function (e) {
 			ui.stopWorkButton.addClass('button-disabled');
 			stopWorkOnIssue(issue.key);
 		});
 
-		ui.spentTimeIndicator.insertAfter(ui.stopWorkButton);
-		ui.spentTimeIndicator.update = function () {
-			setTimeout(ui.spentTimeIndicator.update, 1000);
+		ui.buttonWrap.append(ui.stopWorkButton);
+		ui.opsbar.append(ui.buttonWrap);
+	}
+
+	var bindSpentTimeIndicator = function () {
+		var input = ui.spentTimeIndicator;
+		var updateTime = function () {
+			var oldTime = lib.dateDiff(lib.now(), issue.started);
+			input.val(lib.parseSpent(input.val()));
+
+			console.log(issue.started);
+
+			var newTimeDiff = lib.spentToDate(input.val());
+			var newTime = new Date();
+			newTime.setTime(
+				issue.started.getTime() -
+					(newTimeDiff.getTime() - oldTime.getTime()));
+			input.attr('disabled', true);
+			updateTimeTrackingLabel(issue.key, issue.started, newTime,
+				function () {
+					input.removeAttr('disabled');
+				}
+			);
+			issue.started = newTime;
+			ui.spentTimeFinalIndicator.val(input.val());
+		};
+		input.change(updateTime);
+		input.keyup(function (e) {
+			e.stopPropagation();
+			if (e.keyCode == hotkeys.enter) {
+				updateTime();
+				input[0].blur();
+			} else if (e.keyCode == hotkeys.esc) {
+				input.removeClass('focused');
+				input[0].blur();
+			}
+		});
+		input.focus(function () {
+			input.addClass('focused');
+			input.addClass('changed');
+		});
+		input.blur(function () {
+			input.removeClass('focused');
+		});
+		input.mouseover(function () {
+			input.addClass('focused');
+		});
+		input.mouseout(function () {
+			if (document.activeElement != input[0]) {
+				input.removeClass('focused');
+			}
+		})
+		input.updateHeight = function () {
+			// @TODO: fix hardcode.
+			var height = ui.stopWorkButton.outerHeight() - 2;
+			input.css('height', height + 'px');
+		}
+
+		input.insertAfter(ui.stopWorkButton);
+		input.updateHeight();
+
+		input.update = function () {
+			setTimeout(input.update, 1000);
+			if (issue.started == null) {
+				return;
+			}
 			if (ui.spentTimeIndicator[0] == document.activeElement) {
 				return;
 			}
@@ -554,11 +566,10 @@ var script = function () {
 			var spentParts = [];
 			spentParts.push(spent.getHours() + 'h');
 			spentParts.push(spent.getMinutes() + 'm');
-			ui.spentTimeIndicator.val(lib.parseSpent(spentParts.join(' ')));
+			input.val(lib.parseSpent(spentParts.join(' ')));
 		}
 
-		ui.spentTimeIndicator.update();
-		ui.spentTimeIndicator.updateHeight();
+		input.update();
 	}
 
 	var findAllInWorkIssues = function (callback) {
@@ -632,13 +643,14 @@ var script = function () {
 	}
 
 	var installUiAgile = function () {
-		ui.startWorkButton = ui.startWorkButtonAgile;
-		ui.stopWorkButton = ui.stopWorkButtonAgile;
-		ui.buttonWrap = ui.buttonWrapAgile;
+		if (ui.opsbar != ui.opsbarAgile) {
+			ui.startWorkButton = ui.startWorkButtonAgile;
+			ui.stopWorkButton = ui.stopWorkButtonAgile;
+			ui.buttonWrap = ui.buttonWrapAgile;
+			ui.spinner = ui.spinnerAgile;
+			ui.opsbar = ui.opsbarAgile;
+		}
 
-		ui.spinner = ui.spinnerAgile;
-
-		ui.opsbar = ui.opsbarAgile;
 		lib.$('#ghx-detail-head .ghx-controls').prepend(ui.opsbar);
 	}
 
@@ -714,6 +726,7 @@ var script = function () {
 				} else {
 					issue.started = date;
 					bindStopWork();
+					bindSpentTimeIndicator();
 				}
 			});
 		}
