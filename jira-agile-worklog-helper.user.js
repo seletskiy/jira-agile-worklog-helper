@@ -167,6 +167,7 @@ var script = function () {
 		ui = {
             buttonWrap: lib.$('<li/>')
                 .addClass('toolbar-item'),
+            buttonWrapAgile: lib.$('<div/>'),
 			stopWorkButton: (function () {
                 return lib.$('<button/>')
                     .addClass('aui-button')
@@ -586,6 +587,7 @@ var script = function () {
     var installUiAgile = function () {
         ui.startWorkButton = ui.startWorkButtonAgile;
         ui.stopWorkButton = ui.stopWorkButtonAgile;
+        ui.buttonWrap = ui.buttonWrapAgile;
 
         ui.spinner = ui.spinnerAgile;
 
