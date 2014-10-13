@@ -152,6 +152,7 @@ var script = function () {
 			'Cancel': 'Отмена',
 			'Stop work': 'Остановить работу',
 			'Starting time tracker...': 'Счётчик времени...',
+            'Failed': 'Ошибка',
 			'Start work': 'Начать работу',
 			'What amount of work was done?': 'Что было сделано?',
 			'Start / Stop work': 'Начать / Закончить работу',
@@ -256,6 +257,7 @@ var script = function () {
 						.attr('id', 'worklog-helper-spinner')
 						.attr('aria-disabled', 'true')
 						.addClass('aui-button')
+                        .addClass('spinning')
 						.text(lib._('Starting time tracker...'))
 					)
 
@@ -344,7 +346,21 @@ var script = function () {
 						.addClass('aui-icon')
 						.addClass('aui-icon-small')
 						.addClass('aui-iconfont-build'))
-					.append(lib.$('<span/>')))
+					.append(lib.$('<span/>'))),
+            labelError: lib.$('<div/>')
+                .append(
+                    lib.$('<h2/>').text(lib._('Error')))
+                .append(
+                    lib.$('<p/>').html(lib._(
+                        'Looks like your issue doesn\'t have `labels` field. ' +
+                        'Please, ask your project admin to enable `labels` field. '
+                    )))
+                .append(
+                    lib.$('<p/>').html(
+                        '<a target="_blank" href="https://github.com/seletskiy/jira-agile-worklog-helper/wiki/Labels">' +
+                            lib._('Learn more') +
+                        '</a>'
+                    ))
 		};
 
 		ui.worklogDialog.addPanel('Log work', ui.worklogForm.html());
@@ -371,10 +387,32 @@ var script = function () {
 		})
 	}
 
+    var showLabelsError = function() {
+        lib.ajs.InlineDialog(lib.$('#worklog-helper-spinner'),
+            "label-error-dialog", function (content, trigger, showPopup) {
+                content.css({"padding": "20px"}).html(ui.labelError.html());
+                showPopup();
+                return false;
+            }
+        ).show();
+
+        ui.spinner.find('.aui-button')
+            .removeClass('spinning')
+            .text(lib._('Failed'));
+        ui.spinner.find('.spinner').remove();
+    }
+
 	var getAllLabels = function (issueKey, callback) {
 		makeApiCall('GET', '/rest/api/2/issue/' + issueKey + '/?fields=labels', {},
 			function (response) {
-				callback(response.fields.labels);
+                if (
+                    typeof response.fields == "undefined" ||
+                    typeof response.fields.labels == "undefined"
+                ) {
+                    showLabelsError()
+                } else {
+                    callback(response.fields.labels);
+                }
 			}
 		);
 	}
@@ -726,7 +764,7 @@ var script = function () {
 		'#worklog-helper-spent-time.changed': [
 			'color: black'
 		],
-		'#worklog-helper-spinner': [
+		'#worklog-helper-spinner.spinning': [
 			'padding-right: 25px'
 		],
 		'.ghx-agile .ghx-controls .worklog-helper-agile-spinner': [
