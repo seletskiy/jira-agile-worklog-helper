@@ -365,6 +365,12 @@ var script = function () {
 
 		ui.worklogDialog.addPanel('Log work', ui.worklogForm.html());
 		ui.worklogForm = ui.worklogDialog.getPanel(0, 0).body;
+        ui.worklogForm.find('form').submit(function() {
+            ui.worklogForm
+                .parents('.dialog-components')
+                    .find('.button-panel-submit-button').click()
+            return false;
+        });
 
 		ui.spentTimeFinalIndicator = ui.worklogForm.find('#worklog-helper-spent-time-final');
 	};
@@ -501,7 +507,7 @@ var script = function () {
 			function (response) {
 				removeTimeTrackingLabel(issue.key, issue.started,
 					function (response) {
-						ui.worklogDialog.hide();
+                        ui.worklogDialog.disable();
 						location.reload(true);
 					});
 			}
@@ -755,7 +761,7 @@ var script = function () {
 			'padding-top: 0',
 			'padding-bottom: 0',
 			'padding-left: 5px',
-			'font-size: 13px',
+			'font-size: 14px',
 			'outline: none',
 		],
 		'#worklog-helper-spent-time.focused': [
@@ -797,7 +803,7 @@ var script = function () {
 		],
 		'.worklog-helper-in-work-amount.toomany': [
 			'color: orange'
-		]
+		],
 	};
 
 	for (selector in styles) {
