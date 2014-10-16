@@ -477,6 +477,7 @@ var script = function () {
 	}
 
 	var bindStartWork = function () {
+		ui.buttonWrap.empty();
 		ui.buttonWrap.append(ui.startWorkButton);
 		ui.opsbar.append(ui.buttonWrap);
 		ui.startWorkButton.click(function (e) {
@@ -493,6 +494,7 @@ var script = function () {
 			stopWorkOnIssue(issue.key);
 		});
 
+		ui.buttonWrap.empty();
 		ui.buttonWrap.append(ui.stopWorkButton);
 		ui.opsbar.append(ui.buttonWrap);
 	}
@@ -502,8 +504,6 @@ var script = function () {
 		var updateTime = function () {
 			var oldTime = lib.dateDiff(lib.now(), issue.started);
 			input.val(lib.parseSpent(input.val()));
-
-			console.log(issue.started);
 
 			var newTimeDiff = lib.spentToDate(input.val());
 			var newTime = new Date();
