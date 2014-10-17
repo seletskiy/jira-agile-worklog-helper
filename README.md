@@ -81,12 +81,18 @@ will also work in Agile/Kanban mode.
 * You can create filter to show what issues are currently in progress by you
 using JQL `labels in (jwh:<your-username-here>:in-work)`.
 
+* You can create filter to show all issues in progress by including condition
+`labels in (jwh:in-work)` in your JQL;
+
+
 How it's work
 =============
 
 Jira Agile Worklog Helper utilizes issue labels for time tracking.
 
-Two labels are used:
+Three labels are used:
+* `jwh:in-work` to mark issue in progress by at least one person; sophisticated
+  algorithm used to protect this label gets deleted by race condition;
 * `jwh:<your-username-here>:in-work` to track down which issues currently in progress;
 * `jwh:<your-username-here>:<timestamp>` to track amount of time spent;
 
