@@ -32,6 +32,8 @@
 
 (function () {
 var script = function () {
+	LOCK_MAX_RETRIES = 10;
+
 	//
 	// Library functions.
 	//
@@ -282,6 +284,7 @@ var script = function () {
 				});
 
 				dialog.addButton(lib._('Stop without tracking'), function () {
+					ui.worklogDialog.disable();
 					stopWithoutTracking();
 				});
 
@@ -335,6 +338,7 @@ var script = function () {
 	// Logic goes inside this functions.
 	//
 	var makeApiCall = function (type, url, payload, callback) {
+		makeApiCall.inProgress += 1;
 		lib.$.ajax({
 			type: type,
 			url: url,
@@ -342,9 +346,76 @@ var script = function () {
 			contentType: 'application/json',
 			dataType: 'json',
 			success: function (response) {
-				callback(response);
+				if (typeof callback != "undefined") {
+					callback(response);
+				}
+				makeApiCall.inProgress -= 1;
 			},
 		})
+	}
+
+	makeApiCall.inProgress = 0;
+
+	var removeAllLocks = function (issueKey, locks) {
+		updateLabels(issueKey, locks);
+	}
+
+	var pendReload = function () {
+		console.log("[worklog helper] page reload pending");
+
+		(function () {
+			if (makeApiCall.inProgress > 0) {
+				console.log("[worklog helper] awaiting API calls: " +
+					makeApiCall.inProgress);
+				setTimeout(arguments.callee, 300);
+				return;
+			}
+
+			location.reload(true);
+		})();
+	}
+
+	var acquireLock = function (issueKey, retries, callback) {
+		var lockId = 'jwh:lock:' + Math.random();
+
+		updateLabels(issueKey, [ { add: lockId } ]);
+
+		(function (retry) {
+			var callee = arguments.callee;
+
+			getAllLabels(issueKey, function (labels) {
+				var locked = true;
+				var locks = [];
+
+				lib.$.each(labels, function (k, label) {
+					if (label.match(/^jwh:lock:/)) {
+						locks.push({remove: label});
+						if (label != lockId) {
+							console.log("[worklog helper] another lock " +
+								"was is acquired: " + label);
+							locked = false;
+						}
+					}
+				});
+
+				if (locked) {
+					console.log("[worklog helper] lock acquired");
+					callback(function () {
+						updateLabels(issueKey, [ { remove: lockId } ]);
+					});
+					return;
+				}
+
+				if (retry > 0) {
+					setTimeout(function () { callee(retry - 1); }, 300);
+				} else {
+					console.log("[worklog helper] failed to acquire lock");
+					callback(function () {
+						removeAllLocks(issueKey, locks);
+					});
+				}
+			});
+		}(retries));
 	}
 
 	var showLabelsError = function() {
@@ -392,24 +463,59 @@ var script = function () {
 	}
 
 	var addTimeTrackingLabel = function (issueKey, startedTime, callback) {
-		updateLabels(issueKey,
-			[
-				{ add: 'jwh:' + user.name + ':' + 'in-work' },
-				{ add: 'jwh:' + user.name + ':' + lib.timestamp(startedTime) },
-			],
-			callback
-		);
+		acquireLock(issueKey, LOCK_MAX_RETRIES, function (release) {
+			updateLabels(issueKey,
+				[
+					{ add: 'jwh:in-work' },
+					{ add: 'jwh:' + user.name + ':' + 'in-work' },
+					{ add: 'jwh:' + user.name + ':' + lib.timestamp(startedTime) },
+				],
+				function () {
+					callback();
+					release();
+				}
+			);
+		});
 	}
 
 
 	var removeTimeTrackingLabel = function (issueKey, startedTime, callback) {
-		updateLabels(issueKey,
-			[
-				{ remove: 'jwh:' + user.name + ':' + 'in-work' },
-				{ remove: 'jwh:' + user.name + ':' + lib.timestamp(startedTime) },
-			],
-			callback
-		);
+		var labels = [
+			{ remove: 'jwh:' + user.name + ':' + 'in-work' },
+			{ remove: 'jwh:' + user.name + ':' + lib.timestamp(startedTime) },
+		];
+
+		acquireLock(issueKey, LOCK_MAX_RETRIES, function (release) {
+			isInProgressBySomeoneElse(issueKey, user.name, function (yep) {
+				if (!yep) {
+					labels.push({ remove: 'jwh:in-work' });
+				}
+				updateLabels(issueKey, labels, function () {
+					callback();
+					release();
+				});
+			});
+		});
+	}
+
+	var removeInWorkLabel = function (issueKey, callback) {
+		updateLabels(issueKey, [ { remove: 'jwh:in-work' } ], callback);
+	}
+
+	var isInProgressBySomeoneElse = function (issueKey, myName, callback) {
+		getAllLabels(issueKey, function (labels) {
+			var result = false;
+
+			lib.$.each(labels, function (k, label) {
+				if (label.match(/jwh:[^:]+:in-work/)) {
+					if (label != 'jwh:' + myName + ':in-work') {
+						result = true;
+					}
+				}
+			});
+
+			callback(result);
+		});
 	}
 
 	var updateTimeTrackingLabel = function (
@@ -435,8 +541,8 @@ var script = function () {
 
 	var startWorkOnIssue = function (issueKey) {
 		addTimeTrackingLabel(issueKey, lib.now(), function () {
-			location.reload(true);
-		})
+			pendReload();
+		});
 	}
 
 	var addWorklog = function (issueKey, timeSpent, comment, callback) {
@@ -462,7 +568,7 @@ var script = function () {
 				removeTimeTrackingLabel(issue.key, issue.started,
 					function (response) {
 						ui.worklogDialog.hide();
-						location.reload(true);
+						pendReload();
 					});
 			}
 		)
@@ -472,7 +578,7 @@ var script = function () {
 		removeTimeTrackingLabel(issue.key, issue.started,
 			function (response) {
 				ui.worklogDialog.hide();
-				location.reload(true);
+				pendReload();
 			});
 	}
 
@@ -489,13 +595,14 @@ var script = function () {
 	}
 
 	var bindStopWork = function () {
+		ui.buttonWrap.empty();
+		ui.buttonWrap.append(ui.stopWorkButton);
+
 		ui.stopWorkButton.click(function (e) {
 			ui.stopWorkButton.addClass('button-disabled');
 			stopWorkOnIssue(issue.key);
 		});
 
-		ui.buttonWrap.empty();
-		ui.buttonWrap.append(ui.stopWorkButton);
 		ui.opsbar.append(ui.buttonWrap);
 	}
 
@@ -636,6 +743,7 @@ var script = function () {
 		if (context != 'ignore' && user.name == null) {
 			user.name = lib.$('[name=ajs-remote-user]').attr('content');
 		}
+
 	}
 
 	var installUiStandard = function () {
