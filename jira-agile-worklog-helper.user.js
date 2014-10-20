@@ -1,5 +1,5 @@
 // Jira Agile Worklog Helper
-// Version 1.0 (for JIRA 6+)
+// Version 2.0 (for JIRA 6+)
 // 13-10-2014
 // Autor: Stanislav Seletskiy <s.seletskiy@gmail.com>
 
@@ -15,7 +15,7 @@
 // located.
 //
 // To uninstall, go to Tools/Manage User Scripts,
-// select 'JIRA5 Worklog Helper', and click Uninstall.
+// select 'Jira Agile Worklog Helper', and click Uninstall.
 
 // ==UserScript==
 // @name		  Jira Agile Worklog Helper
@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  1.0
+// @version		  2.0
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*
@@ -32,7 +32,8 @@
 
 (function () {
 var script = function () {
-	LOCK_MAX_RETRIES = 10;
+	var LOCK_MAX_RETRIES = 10;
+	var VERSION = '2.0';
 
 	//
 	// Library functions.
@@ -937,15 +938,15 @@ var script = function () {
 	//
 	// Tracking script installation.
 	//
-	if (!localStorage.getItem('jwh_installation_done')) {
-		console.log("[worklog helper] tracking installation");;
-		localStorage.setItem('jwh_installation_done', 1);
+	if (localStorage.getItem('jwh_installation_done') != VERSION) {
+		console.log("[worklog helper] tracking installation v" + VERSION);
+		localStorage.setItem('jwh_installation_done', VERSION);
 		lib.$('body').append(
-			'<img src="https://ga-beacon.appspot.com/UA-55677222-1/jira-agile-worklog-helper/_installation"/>'
+			'<img src="https://ga-beacon.appspot.com/UA-55677222-1/jira-agile-worklog-helper/_install/v' + VERSION + '"/>'
 		);
 	}
 
-	console.log('[worklog helper] running');
+	console.log('[worklog helper] running v' + VERSION);
 };
 
 (function (callback) {
