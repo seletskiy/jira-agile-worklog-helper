@@ -82,7 +82,9 @@ will also work in Agile/Kanban mode.
 using JQL `labels in (jwh:<your-username-here>:in-work)`.
 
 * You can create filter to show all issues in progress by including condition
-`labels in (jwh:in-work)` in your JQL;
+`labels in (jwh:in-work)` in your JQL, like this:
+![jwh:in-work](https://cloud.githubusercontent.com/assets/674812/4696925/679b3904-581d-11e4-9e98-913e51f70cfa.png)
+
 
 
 How it's work
