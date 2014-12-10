@@ -280,12 +280,18 @@ var script = function () {
 				dialog.addHeader(lib._('What amount of work was done?'));
 
 				dialog.addSubmit(lib._('Log'), function () {
+					if (ui.stopProgressButton) {
+						ui.stopProgressButton.trigger('click');
+					}
 					ui.worklogDialog.disable();
 					stopAndTrackTime();
 				});
 
 				dialog.addButton(lib._('Stop without tracking'), function () {
 					ui.worklogDialog.disable();
+					if (ui.stopProgressButton) {
+						ui.stopProgressButton.trigger('click');
+					}
 					stopWithoutTracking();
 				});
 
@@ -316,7 +322,9 @@ var script = function () {
 						'<a target="_blank" href="https://github.com/seletskiy/jira-agile-worklog-helper/wiki/Labels">' +
 							lib._('Learn more') +
 						'</a>'
-					))
+					)),
+			startProgressButton: lib.$('#action_id_4'),
+			stopProgressButton: lib.$('#action_id_301')
 		};
 
 		ui.worklogDialog.addPanel('Log work', ui.worklogForm.html());
@@ -589,6 +597,10 @@ var script = function () {
 		ui.buttonWrap.append(ui.startWorkButton);
 		ui.opsbar.append(ui.buttonWrap);
 		ui.startWorkButton.click(function (e) {
+			if (ui.startProgressButton) {
+				ui.startProgressButton.trigger('click');
+			}
+
 			ui.startWorkButton
 				.attr('aria-disabled', true)
 				.text(lib._('Starting...'));
