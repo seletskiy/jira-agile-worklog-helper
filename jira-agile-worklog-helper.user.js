@@ -379,44 +379,45 @@ var script = function () {
 	var acquireLock = function (issueKey, retries, callback) {
 		var lockId = 'jwh:lock:' + Math.random();
 
-		updateLabels(issueKey, [ { add: lockId } ]);
+		updateLabels(issueKey, [ { add: lockId } ], function () {
+			(function (retry) {
+				var callee = arguments.callee;
 
-		(function (retry) {
-			var callee = arguments.callee;
+				getAllLabels(issueKey, function (labels) {
+					var locked = true;
+					var locks = [];
 
-			getAllLabels(issueKey, function (labels) {
-				var locked = true;
-				var locks = [];
-
-				lib.$.each(labels, function (k, label) {
-					if (label.match(/^jwh:lock:/)) {
-						locks.push({remove: label});
-						if (label != lockId) {
-							console.log("[worklog helper] another lock " +
-								"was is acquired: " + label);
-							locked = false;
+					lib.$.each(labels, function (k, label) {
+						if (label.match(/^jwh:lock:/)) {
+							locks.push({remove: label});
+							if (label != lockId) {
+								console.log("[worklog helper] another lock " +
+									"was is acquired: " + label);
+								locked = false;
+							}
 						}
+					});
+
+					if (locked) {
+						console.log("[worklog helper] lock acquired");
+						callback(function () {
+							updateLabels(issueKey, [ { remove: lockId } ]);
+						});
+						return;
+					}
+
+					if (retry > 0) {
+						setTimeout(function () { callee(retry - 1); }, 300);
+					} else {
+						console.log("[worklog helper] failed to acquire lock");
+						callback(function () {
+							removeAllLocks(issueKey, locks);
+						});
 					}
 				});
+			}(retries));
+		});
 
-				if (locked) {
-					console.log("[worklog helper] lock acquired");
-					callback(function () {
-						updateLabels(issueKey, [ { remove: lockId } ]);
-					});
-					return;
-				}
-
-				if (retry > 0) {
-					setTimeout(function () { callee(retry - 1); }, 300);
-				} else {
-					console.log("[worklog helper] failed to acquire lock");
-					callback(function () {
-						removeAllLocks(issueKey, locks);
-					});
-				}
-			});
-		}(retries));
 	}
 
 	var showLabelsError = function() {
