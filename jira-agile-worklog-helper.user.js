@@ -1,5 +1,5 @@
 // Jira Agile Worklog Helper
-// Version 2.0 (for JIRA 6+)
+// Version 2.1 (for JIRA 6+)
 // 13-10-2014
 // Autor: Stanislav Seletskiy <s.seletskiy@gmail.com>
 
@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  2.0
+// @version		  2.1
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*

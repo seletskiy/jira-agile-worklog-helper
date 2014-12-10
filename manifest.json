@@ -10,5 +10,5 @@
     "converted_from_user_script": true,
     "description": "Tracks time spent on issues under Agile/Kanaban process",
     "name": "Jira Agile Worklog Helper",
-    "version": "1"
+    "version": "2"
 }
