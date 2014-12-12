@@ -1,5 +1,5 @@
 // Jira Agile Worklog Helper
-// Version 2.1 (for JIRA 6+)
+// Version 2.2 (for JIRA 6+)
 // 13-10-2014
 // Autor: Stanislav Seletskiy <s.seletskiy@gmail.com>
 
@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  2.1
+// @version		  2.2
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*
@@ -33,7 +33,7 @@
 (function () {
 var script = function () {
 	var LOCK_MAX_RETRIES = 10;
-	var VERSION = '2.0';
+	var VERSION = '2.2';
 
 	//
 	// Library functions.
@@ -385,6 +385,12 @@ var script = function () {
 	}
 
 	var acquireLock = function (issueKey, retries, callback) {
+		console.log("[worklog helper] lock disabled due excessive amount of "+
+			"emails sent by Jira: " +
+			"https://github.com/seletskiy/jira-agile-worklog-helper/issues/3")
+		callback(function(){})
+		return
+
 		var lockId = 'jwh:lock:' + Math.random();
 
 		updateLabels(issueKey, [ { add: lockId } ], function () {
