@@ -1,5 +1,5 @@
 // Jira Agile Worklog Helper
-// Version 2.2 (for JIRA 6+)
+// Version 2.3 (for JIRA 6+)
 // 13-10-2014
 // Autor: Stanislav Seletskiy <s.seletskiy@gmail.com>
 
@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  2.2
+// @version		  2.3
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*
@@ -33,7 +33,7 @@
 (function () {
 var script = function () {
 	var LOCK_MAX_RETRIES = 10;
-	var VERSION = '2.2';
+	var VERSION = '2.3';
 
 	//
 	// Library functions.
@@ -105,6 +105,7 @@ var script = function () {
 	// Global state, will be filled later.
 	//
 	var issue = {
+		id: null,
 		key: null,
 		started: null,
 	};
@@ -347,11 +348,14 @@ var script = function () {
 	// Logic goes inside this functions.
 	//
 	var makeApiCall = function (type, url, payload, callback) {
+		if (type != 'GET') {
+			payload = JSON.stringify(payload)
+		}
 		makeApiCall.inProgress += 1;
 		lib.$.ajax({
 			type: type,
 			url: url,
-			data: JSON.stringify(payload),
+			data: payload,
 			contentType: 'application/json',
 			dataType: 'json',
 			success: function (response) {
@@ -569,10 +573,22 @@ var script = function () {
 		);
 	}
 
-	var stopWorkOnIssue = function (issueKey) {
+	var stopWorkOnIssue = function (issueKey, issueId) {
 		ui.spentTimeFinalIndicator.val(ui.spentTimeIndicator.val());
-		ui.worklogDialog.show();
-		ui.worklogForm.find('textarea').focus();
+		getLastestCommit(issueId, function (commit) {
+			if (commit != null) {
+				var trimMessageRe = new RegExp(
+					issueKey + "[^ ]? ?", "i"
+				)
+
+				ui.worklogForm.find('textarea').val(
+					commit.message.replace(trimMessageRe, "")
+				);
+			}
+			ui.worklogDialog.show();
+			ui.worklogForm.find('textarea').focus();
+			ui.worklogForm.find('textarea').select();
+		})
 	}
 
 	var stopAndTrackTime = function () {
@@ -598,6 +614,44 @@ var script = function () {
 			});
 	}
 
+	var getLastestCommit = function (issueId, callback) {
+		makeApiCall('GET', '/rest/dev-status/1.0/issue/detail', {
+				issueId: issueId,
+				applicationType: 'stash',
+				dataType: 'repository'
+			}, function (response) {
+				if (typeof response.detail == "undefined") {
+					return
+				}
+
+				if (response.detail.length == 0) {
+					return
+				}
+
+				var latestTimestamp = new Date(0).getTime();
+				var latestCommit = null;
+				lib.$.each(response.detail, function (k, detail) {
+					lib.$.each(detail.repositories, function (k, repo) {
+						lib.$.each(repo.commits, function (k, commit) {
+							var authorTimestamp = lib.fromDateTime(
+								commit.authorTimestamp
+							).getTime()
+
+							if (authorTimestamp <= latestTimestamp) {
+								return
+							}
+
+							latestTimestamp = authorTimestamp
+							latestCommit = commit
+						});
+					});
+				});
+
+				callback(latestCommit);
+			}
+		);
+	}
+
 	var bindStartWork = function () {
 		ui.buttonWrap.empty();
 		ui.buttonWrap.append(ui.startWorkButton);
@@ -620,7 +674,7 @@ var script = function () {
 
 		ui.stopWorkButton.click(function (e) {
 			ui.stopWorkButton.addClass('button-disabled');
-			stopWorkOnIssue(issue.key);
+			stopWorkOnIssue(issue.key, issue.id);
 		});
 
 		ui.opsbar.append(ui.buttonWrap);
@@ -748,10 +802,15 @@ var script = function () {
 			issue.key = lib.$('#key-val').attr('data-issue-key');
 		}
 
+		if (lib.$('[data-issuekey=' + issue.key + ']').length > 0) {
+			issue.id = lib.$('[data-issue-key=' + issue.key + ']').attr('rel');
+		}
+
 		if (lib.$('.ghx-agile').length > 0 && lib.$('#ghx-pool').length > 0) {
 			issue.key = lib.$('#ghx-detail-issue').attr('data-issuekey');
 			if (issue.key != null) {
 				context = 'agile';
+				issue.id = lib.$('[data-issuekey=' + issue.key + ']').attr('data-issueid');
 			}
 		}
 
