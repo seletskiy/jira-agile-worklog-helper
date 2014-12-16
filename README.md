@@ -49,6 +49,7 @@ Features
 from different locations;
 * issues in progress can be shown via clicking corresponding button or via
 JQL filter.
+* automagically get latest commit message as log work message!
 
 Usage
 =====
