@@ -87,15 +87,13 @@ using JQL `labels in (jwh:<your-username-here>:in-work)`.
 ![jwh:in-work](https://cloud.githubusercontent.com/assets/674812/4696925/679b3904-581d-11e4-9e98-913e51f70cfa.png)
 
 
-
 How it's work
 =============
 
 Jira Agile Worklog Helper utilizes issue labels for time tracking.
 
 Three labels are used:
-* `jwh:in-work` to mark issue in progress by at least one person; sophisticated
-  algorithm used to protect this label gets deleted by race condition;
+* `jwh:in-work` to mark issue in progress by at least one person;
 * `jwh:<your-username-here>:in-work` to track down which issues currently in progress;
 * `jwh:<your-username-here>:<timestamp>` to track amount of time spent;
 
