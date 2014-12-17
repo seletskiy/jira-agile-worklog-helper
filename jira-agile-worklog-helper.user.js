@@ -1,5 +1,5 @@
 // Jira Agile Worklog Helper
-// Version 2.3 (for JIRA 6+)
+// Version 2.4 (for JIRA 6+)
 // 13-10-2014
 // Autor: Stanislav Seletskiy <s.seletskiy@gmail.com>
 
@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  2.3
+// @version		  2.4
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*
@@ -33,7 +33,7 @@
 (function () {
 var script = function () {
 	var LOCK_MAX_RETRIES = 10;
-	var VERSION = '2.3';
+	var VERSION = '2.4';
 
 	//
 	// Library functions.
@@ -347,7 +347,7 @@ var script = function () {
 	//
 	// Logic goes inside this functions.
 	//
-	var makeApiCall = function (type, url, payload, callback) {
+	var makeApiCall = function (type, url, payload, callback, error) {
 		if (type != 'GET') {
 			payload = JSON.stringify(payload)
 		}
@@ -364,6 +364,12 @@ var script = function () {
 				}
 				makeApiCall.inProgress -= 1;
 			},
+			error: function (response) {
+				if (typeof error != "undefined") {
+					error(JSON.parse(response.responseText));
+				}
+				makeApiCall.inProgress -= 1;
+			}
 		})
 	}
 
@@ -621,11 +627,11 @@ var script = function () {
 				dataType: 'repository'
 			}, function (response) {
 				if (typeof response.detail == "undefined") {
-					return
+					return callback(null);
 				}
 
 				if (response.detail.length == 0) {
-					return
+					return callback(null);
 				}
 
 				var latestTimestamp = new Date(0).getTime();
@@ -648,6 +654,9 @@ var script = function () {
 				});
 
 				callback(latestCommit);
+			}, function (error) {
+				console.log(error);
+				callback(null);
 			}
 		);
 	}
