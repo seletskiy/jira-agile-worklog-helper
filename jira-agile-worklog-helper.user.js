@@ -108,6 +108,7 @@ var script = function () {
 		id: null,
 		key: null,
 		started: null,
+		assignee: null,
 	};
 
 	var user = {
@@ -324,8 +325,8 @@ var script = function () {
 							lib._('Learn more') +
 						'</a>'
 					)),
-			startProgressButton: lib.$('#action_id_4'),
-			stopProgressButton: lib.$('#action_id_301')
+			startProgressButton: null, //will be loaded dynamically
+			stopProgressButton: null //will be loaded dynamically
 		};
 
 		ui.worklogDialog.addPanel('Log work', ui.worklogForm.html());
@@ -342,7 +343,18 @@ var script = function () {
 		ui.spentTimeFinalIndicator = ui.worklogForm.find('#worklog-helper-spent-time-final');
 	};
 
+	var loadDynamicUi = function() {
+		if (ui.startProgressButton == null || !ui.startProgressButton.length) {
+			ui.startProgressButton = lib.$('#action_id_4');
+		}
+
+		if (ui.stopProgressButton == null || !ui.stopProgressButton.length) {
+			ui.stopProgressButton = lib.$('#action_id_301')
+		}
+	}
+
 	loadUi();
+	loadDynamicUi();
 
 	//
 	// Logic goes inside this functions.
@@ -832,6 +844,9 @@ var script = function () {
 			user.name = lib.$('[name=ajs-remote-user]').attr('content');
 		}
 
+		if (context == 'issue') {
+			issue.assignee = lib.$('#assignee-val .user-hover').attr('rel')
+		}
 	}
 
 	var installUiStandard = function () {
@@ -897,9 +912,13 @@ var script = function () {
 			return;
 		}
 
+		loadDynamicUi();
+
 		if (!isUiPresent()) {
 			if (context == 'issue') {
-				installUiStandard();
+				if (issue.assignee == user.name) {
+					installUiStandard();
+				}
 			}
 
 			if (context == 'agile') {
