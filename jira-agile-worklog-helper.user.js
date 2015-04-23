@@ -42,8 +42,7 @@ var script = function () {
 		$: window.jQuery,
 		ajs: window.AJS,
 		style: function style(selector, rules) {
-			var style;
-			style = document.createElement('style');
+			var style = document.createElement('style');
 			style.type = 'text/css';
 			style.textContent = selector + ' {' + rules.join(';') + '}';
 			document.getElementsByTagName('head')[0].appendChild(style);
@@ -111,6 +110,14 @@ var script = function () {
 		assignee: null,
 	};
 
+	//
+	// Issue stages map by issue status id
+	//
+	var issueStages = {
+		testing: 10010,
+		preproduction: 10033
+	}
+
 	var user = {
 		name: null,
 	}
@@ -161,6 +168,8 @@ var script = function () {
 			'Start work': 'Начать работу',
 			'What amount of work was done?': 'Что было сделано?',
 			'Start / Stop work': 'Начать / Закончить работу',
+			'Build package': 'Собрать билдом',
+			'Test package': 'Собрать тестом'
 		},
 		'en': {}
 	};
@@ -188,12 +197,24 @@ var script = function () {
 					.addClass('aui-button')
 					.addClass('aui-button-compact')
 					.addClass('worklog-helper-start-button')
-					.text('▶'),
+					.text('▶')
+					.attr('title', lib._('Start work')),
 			stopWorkButtonAgile: lib.$('<button/>')
 					.addClass('aui-button')
 					.addClass('aui-button-compact')
 					.addClass('worklog-helper-stop-button')
-					.text('◼'),
+					.text('◼')
+					.attr('title', lib._('Stop work')),
+			buildButton: lib.$('<button/>')
+					.addClass('aui-button')
+					.addClass('worklog-helper-build-button')
+					.text(lib._('Build package')),
+			buildButtonAgile: lib.$('<button/>')
+					.addClass('aui-button')
+					.addClass('aui-button-compact')
+					.addClass('worklog-helper-build-button')
+					.text('⚒')
+					.attr('title', 'Build/Test package'),
 			opsbar: lib.$('<ul/>')
 					.addClass('toolbar-group')
 					.attr('id', 'opsbar-transitions-start-stop'),
@@ -321,7 +342,8 @@ var script = function () {
 					)))
 				.append(
 					lib.$('<p/>').html(
-						'<a target="_blank" href="https://github.com/seletskiy/jira-agile-worklog-helper/wiki/Labels">' +
+						'<a target="_blank" href="https://github.com/seletskiy' +
+							'/jira-agile-worklog-helper/wiki/Labels">' +
 							lib._('Learn more') +
 						'</a>'
 					)),
@@ -359,33 +381,63 @@ var script = function () {
 	//
 	// Logic goes inside this functions.
 	//
-	var makeApiCall = function (type, url, payload, callback, error) {
-		if (type != 'GET') {
-			payload = JSON.stringify(payload)
-		}
-		makeApiCall.inProgress += 1;
-		lib.$.ajax({
-			type: type,
-			url: url,
-			data: payload,
-			contentType: 'application/json',
-			dataType: 'json',
-			success: function (response) {
-				if (typeof callback != "undefined") {
-					callback(response);
-				}
-				makeApiCall.inProgress -= 1;
-			},
-			error: function (response) {
-				if (typeof error != "undefined") {
-					error(JSON.parse(response.responseText));
-				}
-				makeApiCall.inProgress -= 1;
-			}
-		})
-	}
+	var API = {
+		inProgress: 0,
 
-	makeApiCall.inProgress = 0;
+		call: function (method, url, payload, callback, error) {
+			if (method != 'GET') {
+				payload = JSON.stringify(payload)
+			}
+
+			API.inProgress += 1;
+
+			lib.$.ajax({
+				method: method,
+				url: url,
+				data: payload,
+				contentType: 'application/json',
+				dataType: 'json',
+				success: function (response) {
+					if (typeof callback != "undefined") {
+						callback(response);
+					}
+
+					API.inProgress -= 1;
+				},
+				error: function (response) {
+					if (typeof error != "undefined") {
+						error(JSON.parse(response.responseText));
+					}
+
+					API.inProgress -= 1;
+				}
+			})
+		},
+
+		plainCall: function (method, url, payload, callback, error) {
+			API.inProgress += 1;
+
+			lib.$.ajax({
+				method: method,
+				url: url,
+				data: payload,
+				success: function (response) {
+					if (typeof callback != "undefined") {
+						callback(response);
+					}
+
+					API.inProgress -= 1;
+				},
+				error: function (response) {
+					if (typeof error != "undefined") {
+						error(response.responseText);
+					}
+
+					API.inProgress -= 1;
+				}
+			})
+		}
+	}
 
 	var removeAllLocks = function (issueKey, locks) {
 		updateLabels(issueKey, locks);
@@ -395,9 +447,9 @@ var script = function () {
 		console.log("[worklog helper] page reload pending");
 
 		(function () {
-			if (makeApiCall.inProgress > 0) {
+			if (API.inProgress > 0) {
 				console.log("[worklog helper] awaiting API calls: " +
-					makeApiCall.inProgress);
+					API.inProgress);
 				setTimeout(arguments.callee, 300);
 				return;
 			}
@@ -472,7 +524,7 @@ var script = function () {
 	}
 
 	var getAllLabels = function (issueKey, callback) {
-		makeApiCall('GET', '/rest/api/2/issue/' + issueKey + '/?fields=labels', {},
+		API.call('GET', '/rest/api/2/issue/' + issueKey + '/?fields=labels', {},
 			function (response) {
 				if (
 					typeof response.fields == "undefined" ||
@@ -569,7 +621,7 @@ var script = function () {
 	}
 
 	var updateLabels = function (issueKey, changes, callback) {
-		makeApiCall('PUT', '/rest/api/2/issue/' + issueKey,
+		API.call('PUT', '/rest/api/2/issue/' + issueKey,
 			{
 				update: { labels: changes }
 			},
@@ -584,7 +636,7 @@ var script = function () {
 	}
 
 	var addWorklog = function (issueKey, timeSpent, comment, callback) {
-		makeApiCall('POST', '/rest/api/2/issue/' + issueKey + '/worklog', {
+		API.call('POST', '/rest/api/2/issue/' + issueKey + '/worklog', {
 				timeSpent: timeSpent,
 				comment: comment
 			}, callback
@@ -632,8 +684,16 @@ var script = function () {
 			});
 	}
 
+	var getIssueStage = function(issueKey, callback) {
+		API.call('GET', '/rest/api/2/issue/' + issueKey, {},
+			function(response) {
+				callback(parseInt(response.fields.status.id))
+			}
+		);
+	}
+
 	var getLastestCommit = function (issueId, callback) {
-		makeApiCall('GET', '/rest/dev-status/1.0/issue/detail', {
+		API.call('GET', '/rest/dev-status/1.0/issue/detail', {
 				issueId: issueId,
 				applicationType: 'stash',
 				dataType: 'repository'
@@ -673,6 +733,35 @@ var script = function () {
 		);
 	}
 
+	var buildPackage = function (issueKey, buildType, callback) {
+		var showPopup = function(type, response) {
+			// Expiremental AUI feature
+			require(["aui/flag"], function(flag) {
+				var popup = flag({
+					type: type,
+					body: response
+				});
+			});
+		};
+
+		API.plainCall(
+			'GET',
+			'http://bor.s/api/issue/' + issueKey + '/' + buildType + '/',
+			{
+				user_key: user.name,
+				user_id: user.name
+			},
+			function(response) {
+				showPopup('success', response)
+				callback();
+			},
+			function(response) {
+				showPopup('error', response)
+				callback();
+			}
+		);
+	}
+
 	var bindStartWork = function () {
 		ui.buttonWrap.empty();
 		ui.buttonWrap.append(ui.startWorkButton);
@@ -686,6 +775,33 @@ var script = function () {
 				.attr('aria-disabled', true)
 				.text(lib._('Starting...'));
 			startWorkOnIssue(issue.key);
+		});
+	}
+
+	var bindBuildPackage = function (buildType) {
+		if (context == 'agile') {
+			buildButtonText = ui.buildButtonAgile.text()
+		} else {
+			buildButtonText = lib._(
+				buildType.charAt(0).toUpperCase() +
+					buildType.slice(1) + ' package'
+			);
+		}
+
+		ui.buildButton.text(buildButtonText)
+
+		ui.buttonWrap.prepend(ui.buildButton);
+
+		ui.buildButton.click(function (e) {
+			ui.buildButton
+				.attr('aria-disabled', true)
+				.text(lib._('Building...'));
+
+			buildPackage(issue.key, buildType, function () {
+				ui.buildButton
+					.attr('aria-disabled', false)
+					.text(buildButtonText);
+			});
 		});
 	}
 
@@ -775,7 +891,7 @@ var script = function () {
 	}
 
 	var findAllInWorkIssues = function (callback) {
-		makeApiCall('POST', '/rest/api/2/search',
+		API.call('POST', '/rest/api/2/search',
 			{
 				jql: 'labels in (jwh:' + user.name + ':in-work)',
 				fields: ['summary']
@@ -856,6 +972,7 @@ var script = function () {
 	var installUiAgile = function () {
 		if (ui.opsbar != ui.opsbarAgile) {
 			ui.startWorkButton = ui.startWorkButtonAgile;
+			ui.buildButton = ui.buildButtonAgile;
 			ui.stopWorkButton = ui.stopWorkButtonAgile;
 			ui.buttonWrap = ui.buttonWrapAgile;
 			ui.spinner = ui.spinnerAgile;
@@ -943,6 +1060,20 @@ var script = function () {
 					bindStopWork();
 					bindSpentTimeIndicator();
 				}
+
+				getIssueStage(issue.key, function(stage) {
+					issue.stage = stage
+
+					switch (issue.stage) {
+						case issueStages.testing:
+							bindBuildPackage('build');
+							break;
+
+						case issueStages.preproduction:
+							bindBuildPackage('test');
+							break;
+					}
+				});
 			});
 		}
 	}
@@ -957,15 +1088,21 @@ var script = function () {
 	//
 	(function () {
 		setTimeout(arguments.callee, 100);
-		var container = lib.$('body > div#keyboard-shortcuts-dialog').filter(':last');
+		var container = lib.$('body > div#keyboard-shortcuts-dialog')
+				.filter(':last');
+
 		var text = lib._('Start / Stop Work') + ':';
+
 		if (container.length) {
 			var alreadyInserted = container.
 					find('dt:contains(' + text + ')').length;
 			if (alreadyInserted) {
 				return;
 			}
-			container.find('#shortcutsmenu .module:eq(2) .item-details li:eq(3)').remove();
+
+			container.find('#shortcutsmenu .module:eq(2) .item-details li:eq(3)')
+				.remove();
+
 			container.find('#shortcutsmenu .module:eq(2) .item-details').
 				append('<li><dl>' +
 					'<dt>' + text + '</dt>' +
@@ -1017,7 +1154,8 @@ var script = function () {
 			'margin-right: 10px'
 		],
 		'.toolbar-group .toolbar-item button.worklog-helper-start-button': [
-			'outline: none'
+			'outline: none',
+			'margin-left: 10px !important'
 		],
 		'.toolbar-group .toolbar-item button.worklog-helper-stop-button': [
 			'border-bottom-right-radius: 0',
@@ -1048,7 +1186,8 @@ var script = function () {
 		console.log("[worklog helper] tracking installation v" + VERSION);
 		localStorage.setItem('jwh_installation_done', VERSION);
 		lib.$('body').append(
-			'<img src="https://ga-beacon.appspot.com/UA-55677222-1/jira-agile-worklog-helper/_install/v' + VERSION + '"/>'
+			'<img src="https://ga-beacon.appspot.com/UA-55677222-1/' +
+				'jira-agile-worklog-helper/_install/v' + VERSION + '"/>'
 		);
 	}
 
