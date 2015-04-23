@@ -24,7 +24,7 @@
 // @match		  http://jira.ngs.local/*
 // @match		  http://jira/*
 // @match		  http://jira.rn/*
-// @version		  2.4
+// @version		  3.0
 // @include		  http://jira.ngs.local/*
 // @include		  http://jira/*
 // @include		  http://jira.rn/*
@@ -33,7 +33,7 @@
 (function () {
 var script = function () {
 	var LOCK_MAX_RETRIES = 10;
-	var VERSION = '2.4';
+	var VERSION = '3.0';
 
 	//
 	// Library functions.
