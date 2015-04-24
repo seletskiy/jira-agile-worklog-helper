@@ -390,10 +390,12 @@ var script = function () {
 				payload = JSON.stringify(payload)
 			}
 
+			console.log(method);
+
 			API.inProgress += 1;
 
 			lib.$.ajax({
-				method: method,
+				type: method,
 				url: url,
 				data: payload,
 				contentType: 'application/json',
@@ -419,7 +421,7 @@ var script = function () {
 			API.inProgress += 1;
 
 			lib.$.ajax({
-				method: method,
+				type: method,
 				url: url,
 				data: payload,
 				success: function (response) {
