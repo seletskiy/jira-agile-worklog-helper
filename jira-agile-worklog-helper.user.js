@@ -32,8 +32,9 @@
 
 (function () {
 var script = function () {
-	var LOCK_MAX_RETRIES = 10;
 	var VERSION = '3.0';
+	var LOCK_MAX_RETRIES = 10;
+	var BUILD_URL = 'http://bor.s/api/issue/:issue/:action/';
 
 	//
 	// Library functions.
@@ -746,7 +747,7 @@ var script = function () {
 
 		API.plainCall(
 			'GET',
-			'http://bor.s/api/issue/' + issueKey + '/' + buildType + '/',
+			BUILD_URL.replace(':issue', issueKey).replace(':action', buildType),
 			{
 				user_key: user.name,
 				user_id: user.name
