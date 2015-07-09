@@ -18,21 +18,22 @@
 // select 'Jira Agile Worklog Helper', and click Uninstall.
 
 // ==UserScript==
-// @name		  Jira Agile Worklog Helper
-// @namespace	  http://jira/
-// @description   Tracks time have being spent on issues / Подсчитывает время, затраченное на задачи
-// @match		  http://jira.ngs.local/*
-// @match		  http://jira/*
-// @match		  http://jira.rn/*
-// @version		  3.0
-// @include		  http://jira.ngs.local/*
-// @include		  http://jira/*
-// @include		  http://jira.rn/*
+// @name           Jira Agile Worklog Helper
+// @namespace      http://jira/
+// @description    Tracks time have being spent on issues / Подсчитывает время, затраченное на задачи
+// @match          http://jira.ngs.local/*
+// @match          http://jira/*
+// @match          http://jira.rn/*
+// @version        3.1
+// @include        http://jira.ngs.local/*
+// @include        http://jira/*
+// @include        http://jira.rn/*
+// @grant          none
 // ==/UserScript==
 
 (function () {
 var script = function () {
-	var VERSION = '3.0';
+	var VERSION = '3.1';
 	var LOCK_MAX_RETRIES = 10;
 	var BUILD_URL = 'http://bor.s/api/issue/:issue/:action/';
 
@@ -115,6 +116,7 @@ var script = function () {
 	// Issue stages map by issue status id
 	//
 	var issueStages = {
+		review: 10031,
 		testing: 10010,
 		preproduction: 10033
 	}
@@ -1068,6 +1070,7 @@ var script = function () {
 					issue.stage = stage
 
 					switch (issue.stage) {
+						case issueStages.review:
 						case issueStages.testing:
 							bindBuildPackage('build');
 							break;
