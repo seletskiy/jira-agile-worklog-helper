@@ -4,7 +4,7 @@
         "exclude_globs": [],
         "include_globs": ["*"],
         "js": ["jira-agile-worklog-helper.user.js"],
-        "matches": ["http://jira.rn/*", "https://jira/*"],
+        "matches": ["http://jira.rn/*", "https://jira/*", "https://*.atlassian.net/*"],
         "run_at": "document_end"
     }],
     "converted_from_user_script": true,
